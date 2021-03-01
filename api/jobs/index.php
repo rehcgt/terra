@@ -13,8 +13,9 @@ try {
     $request = $client->request('POST', 'https://search.torre.co/opportunities/_search', [
         'query' => [
             'offset' => '0',
-            'size' => '5000',
-            'aggregate' => 'false'
+            'size' => '1000',
+            'aggregate' => 'false',
+            'currency' => 'USD%24'
         ],
         'body' => '{"status": {"code": "open"}}'
     ]);
@@ -22,16 +23,18 @@ try {
     $jobs_array = array();
     if ($result["results"]) {
         foreach ($result["results"] as $job) {
+            $jobs_array[$job["id"]]["id"] = $job["id"];
             $jobs_array[$job["id"]]["description"] = $job["objective"];
             $jobs_array[$job["id"]]["type"] = $job["type"];
-            $jobs_array[$job["id"]]["organizations"] = $job["organizations"];
-            $jobs_array[$job["id"]]["locations"] = $job["locations"];
+            $jobs_array[$job["id"]]["company"] = $job["organizations"][0]["name"];                        
             $jobs_array[$job["id"]]["remote"] = $job["remote"];
-            $jobs_array[$job["id"]]["salary_info"] = $job["compensation"];
+            $jobs_array[$job["id"]]["min_salary"] = $job["compensation"]["data"]["currency"]." ".number_format($job["compensation"]["data"]["minAmount"], 2);
+            $jobs_array[$job["id"]]["max_salary"] = $job["compensation"]["data"]["currency"]." ".number_format($job["compensation"]["data"]["maxAmount"], 2);
             $jobs_array[$job["id"]]["deadline"] = $job["deadline"];
+            $jobs_array[$job["id"]]["apply_url"] = "https://torre.co/jobs/".$job["id"];
         }
     }
-    echo json_encode($jobs_array);
+    echo json_encode(array_values($jobs_array));
 } catch (GuzzleException $e) {
     echo "The following error has ocurred: ".$e->getCode()." - ".$e->getMessage();
 }
